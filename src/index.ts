@@ -1,106 +1,104 @@
-async function fetchPrice(price: number) : Promise<number>{
-    if(price < 0){
-        throw new Error("Price must be positive integer")
-    }
-    return price
+import express from "express";
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
 }
 
+const products: Product[] = [
+  {
+    id: 1,
+    name: "Keyboard",
+    price: 20000,
+  },
+  {
+    id: 2,
+    name: "Mouse",
+    price: 10000,
+  },
+];
 
-async function getProductPrice(price: number): Promise<number>{
-    const result = await fetchPrice(price)
-    return result
-} 
+app.get("/products", (req, res) => {
+  res.json({
+    message: "Get all products",
+    data: products,
+  });
+});
 
-async function main(): Promise<void>{
-    try{
-        const result = await getProductPrice(0)
-        console.log(result)
-    }catch(error){
-        console.log(error)
-    }
-}
+app.get("/products/:id", (req, res) => {
+  const id: number = Number(req.params.id);
 
-main()
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      message: "ID must be positive integer",
+    });
+  }
 
+  if (Number.isNaN(id)) {
+    return res.status(400).json({
+      message: "ID invalid",
+    });
+  }
 
-// interface User {
-//     id: number,
-//     name: string,
-//     email: string
-// }
+  const result = products.find((product) => product.id === id);
 
-// interface Admin extends User {
-//     role: string
-// }
+  if (result === undefined) {
+    return res.status(404).json({
+      message: "Product not found",
+    });
+  }
 
-// const admin: Admin = {
-//     id: 1,
-//     name: "Budi",
-//     email: "budi@example.com",
-//     role: "Engineer"
-// }
+  return res.status(200).json({
+    message: "Data retrieved successfully",
+    data: result,
+  });
+});
 
+app.post("/products", (req, res) => {
+  const body: unknown = req.body;
 
-// type Product = {
-//     id: number;
-//     name: string;
-//     price: number;
-// };
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return res.status(400).json({
+      message: "Request body must be an object",
+    });
+  }
 
-// const products: Product[] = [
-//     {
-//         id: 1,
-//         name: "Keyboard",
-//         price: 20000
-//     },
-//     {
-//         id: 2,
-//         name: "Mouse",
-//         price: 10000
-//     }
-// ]
+  const { name, price } = body as Record<string,unknown>;
 
-// function getTotalPrice(products: Product[]): number {
-//     const sum = products.reduce((acc,curr)=>{
-//         return acc + curr.price
-//     },0)
-//     return sum
-// }   
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return res.status(400).json({
+      message: "Name must be a non-empty string",
+    });
+  }
 
-// console.log(getTotalPrice(products))
+  if (typeof price !== "number" || !Number.isInteger(price) || price <= 0) {
+    return res.status(400).json({
+      message: "Price must be a positive integer",
+    });
+  }
 
+  const id = Math.max(0, ...products.map((product) => product.id)) + 1;
 
-// function formatId(id: number | string):string{
-//     return typeof id === "number" ? `ID Angka: ${id}` : `ID string: ${id}`
-// }
+  const newProduct: Product = {
+    id: id,
+    name: name,
+    price: price,
+  };
 
-// console.log(formatId(1))
+  products.push(newProduct);
 
+  return res.status(200).json({
+    message: "Product success created",
+    data: products,
+  });
+});
 
-
-// type User = {
-//     id: number,
-//     name: string,
-//     age?: number,
-//     email: string,
-//     phone?: string
-// }
-
-// const user: User = {
-//     id: 1,
-//     age: 23,
-//     name: "Yuandi",
-//     email: "yuandi@gmail.com",
-// }
-
-// const user2: User = {
-//     id: 2,
-//     name:"Budi",
-//     email: "budi@example.com"
-// }
-
-// function getUserInfo(user:User) : string{
-//     return `${user.age !== undefined ? `Umur user: ${user.age} tahun` : 'Umur user belum tersedia'} `
-// }
-
-// console.log(getUserInfo(user))
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

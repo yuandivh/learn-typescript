@@ -1,88 +1,79 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-async function fetchPrice(price) {
-    if (price < 0) {
-        throw new Error("Price must be positive integer");
+import express from "express";
+const app = express();
+const PORT = 3000;
+app.use(express.json());
+const products = [
+    {
+        id: 1,
+        name: "Keyboard",
+        price: 20000,
+    },
+    {
+        id: 2,
+        name: "Mouse",
+        price: 10000,
+    },
+];
+app.get("/products", (req, res) => {
+    res.json({
+        message: "Get all products",
+        data: products,
+    });
+});
+app.get("/products/:id", (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "ID must be positive integer",
+        });
     }
-    return price;
-}
-async function getProductPrice(price) {
-    const result = fetchPrice(price);
-    console.log(result, "test hasil");
-    return result;
-}
-async function main() {
-    try {
-        const result = await getProductPrice(0);
-        console.log(result);
+    if (Number.isNaN(id)) {
+        return res.status(400).json({
+            message: "ID invalid",
+        });
     }
-    catch (error) {
-        console.log(error);
+    const result = products.find((product) => product.id === id);
+    if (result === undefined) {
+        return res.status(404).json({
+            message: "Product not found",
+        });
     }
-}
-main();
-// interface User {
-//     id: number,
-//     name: string,
-//     email: string
-// }
-// interface Admin extends User {
-//     role: string
-// }
-// const admin: Admin = {
-//     id: 1,
-//     name: "Budi",
-//     email: "budi@example.com",
-//     role: "Engineer"
-// }
-// type Product = {
-//     id: number;
-//     name: string;
-//     price: number;
-// };
-// const products: Product[] = [
-//     {
-//         id: 1,
-//         name: "Keyboard",
-//         price: 20000
-//     },
-//     {
-//         id: 2,
-//         name: "Mouse",
-//         price: 10000
-//     }
-// ]
-// function getTotalPrice(products: Product[]): number {
-//     const sum = products.reduce((acc,curr)=>{
-//         return acc + curr.price
-//     },0)
-//     return sum
-// }   
-// console.log(getTotalPrice(products))
-// function formatId(id: number | string):string{
-//     return typeof id === "number" ? `ID Angka: ${id}` : `ID string: ${id}`
-// }
-// console.log(formatId(1))
-// type User = {
-//     id: number,
-//     name: string,
-//     age?: number,
-//     email: string,
-//     phone?: string
-// }
-// const user: User = {
-//     id: 1,
-//     age: 23,
-//     name: "Yuandi",
-//     email: "yuandi@gmail.com",
-// }
-// const user2: User = {
-//     id: 2,
-//     name:"Budi",
-//     email: "budi@example.com"
-// }
-// function getUserInfo(user:User) : string{
-//     return `${user.age !== undefined ? `Umur user: ${user.age} tahun` : 'Umur user belum tersedia'} `
-// }
-// console.log(getUserInfo(user))
+    return res.status(200).json({
+        message: "Data retrieved successfully",
+        data: result,
+    });
+});
+app.post("/products", (req, res) => {
+    const body = req.body;
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+        return res.status(400).json({
+            message: "Request body must be an object",
+        });
+    }
+    const { name, price } = body;
+    if (typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({
+            message: "Name must be a non-empty string",
+        });
+    }
+    if (typeof price !== "number" || !Number.isInteger(price) || price <= 0) {
+        return res.status(400).json({
+            message: "Price must be a positive integer",
+        });
+    }
+    const id = Math.max(0, ...products.map((product) => product.id)) + 1;
+    const newProduct = {
+        id: id,
+        name: name,
+        price: price,
+    };
+    products.push(newProduct);
+    return res.status(200).json({
+        message: "Product success created",
+        data: products,
+    });
+});
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
 //# sourceMappingURL=index.js.map
