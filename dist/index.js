@@ -1,4 +1,5 @@
-import express from "express";
+import express, {} from "express";
+import { validateProduct } from "./middleware/validateProduct.js";
 const app = express();
 const PORT = 3000;
 app.use(express.json());
@@ -44,23 +45,7 @@ app.get("/products/:id", (req, res) => {
     });
 });
 app.post("/products", (req, res) => {
-    const body = req.body;
-    if (typeof body !== "object" || body === null || Array.isArray(body)) {
-        return res.status(400).json({
-            message: "Request body must be an object",
-        });
-    }
-    const { name, price } = body;
-    if (typeof name !== "string" || name.trim().length === 0) {
-        return res.status(400).json({
-            message: "Name must be a non-empty string",
-        });
-    }
-    if (typeof price !== "number" || !Number.isInteger(price) || price <= 0) {
-        return res.status(400).json({
-            message: "Price must be a positive integer",
-        });
-    }
+    const { name, price } = req.body;
     const id = Math.max(0, ...products.map((product) => product.id)) + 1;
     const newProduct = {
         id: id,
@@ -68,9 +53,9 @@ app.post("/products", (req, res) => {
         price: price,
     };
     products.push(newProduct);
-    return res.status(200).json({
-        message: "Product success created",
-        data: products,
+    return res.status(201).json({
+        message: "Product created successfully",
+        data: newProduct,
     });
 });
 app.listen(PORT, () => {

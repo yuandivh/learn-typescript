@@ -1,4 +1,5 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
+import { validateProduct } from "./middleware/validateProduct.js";
 
 const app = express();
 const PORT = 3000;
@@ -9,6 +10,11 @@ interface Product {
   id: number;
   name: string;
   price: number;
+}
+
+interface CreateProductRequests {
+  name: string,
+  price: number
 }
 
 const products: Product[] = [
@@ -60,28 +66,8 @@ app.get("/products/:id", (req, res) => {
   });
 });
 
-app.post("/products", (req, res) => {
-  const body: unknown = req.body;
-
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return res.status(400).json({
-      message: "Request body must be an object",
-    });
-  }
-
-  const { name, price } = body as Record<string,unknown>;
-
-  if (typeof name !== "string" || name.trim().length === 0) {
-    return res.status(400).json({
-      message: "Name must be a non-empty string",
-    });
-  }
-
-  if (typeof price !== "number" || !Number.isInteger(price) || price <= 0) {
-    return res.status(400).json({
-      message: "Price must be a positive integer",
-    });
-  }
+app.post("/products", validateProduct , (req: Request<{},{}, CreateProductRequests>, res: Response) => {
+  const {name, price} = req.body
 
   const id = Math.max(0, ...products.map((product) => product.id)) + 1;
 
@@ -93,9 +79,9 @@ app.post("/products", (req, res) => {
 
   products.push(newProduct);
 
-  return res.status(200).json({
-    message: "Product success created",
-    data: products,
+  return res.status(201).json({
+    message: "Product created successfully",
+    data: newProduct,
   });
 });
 
